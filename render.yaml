@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: qr-checkpoints
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: TURSO_DATABASE_URL
+        sync: false
+      - key: TURSO_AUTH_TOKEN
+        sync: false
+      - key: AUTH_USER
+        sync: false
+      - key: AUTH_PASS
+        sync: false

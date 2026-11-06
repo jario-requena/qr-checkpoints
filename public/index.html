@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Puntos de Control · Generador QR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  :root{
+    --paper: #EFEAD9;
+    --paper-line: rgba(32,38,46,0.05);
+    --ink: #20262E;
+    --ink-muted: #756C5C;
+    --card: #F8F4E8;
+    --border: #D8CFB8;
+    --stamp: #B23A2E;
+    --stamp-soft: rgba(178,58,46,0.10);
+    --radius: 4px;
+  }
+  *{ box-sizing: border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background-color: var(--paper);
+    background-image:
+      linear-gradient(var(--paper-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--paper-line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+  }
+  .app{
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+  .eyebrow{
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--stamp);
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+  h1{
+    font-family: 'JetBrains Mono', monospace;
+    font-size: clamp(28px, 5vw, 42px);
+    font-weight: 700;
+    margin: 0 0 12px;
+    letter-spacing: -0.01em;
+  }
+  .sub{
+    color: var(--ink-muted);
+    font-size: 15px;
+    line-height: 1.6;
+    max-width: 560px;
+    margin: 0 0 22px;
+  }
+  .badges{
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 36px;
+  }
+  .badge{
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--ink);
+    padding: 7px 12px;
+    border-radius: var(--radius);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .badge::before{ content: "✓"; color: var(--stamp); font-weight: 700; }
+
+  .panel{
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px;
+    margin-bottom: 28px;
+  }
+  .add-row{
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .add-row input{
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    padding: 11px 13px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: #fff;
+    color: var(--ink);
+    flex: 1 1 160px;
+  }
+  .add-row input:focus, textarea:focus, button:focus-visible{
+    outline: 2px solid var(--stamp);
+    outline-offset: 1px;
+  }
+  #cpUrl{ flex: 2 1 240px; }
+  button{
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: transform 0.08s ease, opacity 0.15s ease;
+  }
+  button:active{ transform: scale(0.97); }
+  button:disabled{
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .primary-btn{
+    background: var(--stamp);
+    color: #fff;
+    padding: 11px 18px;
+    white-space: nowrap;
+  }
+  .primary-btn:hover:not(:disabled){ opacity: 0.92; }
+  .link-btn{
+    background: none;
+    border: none;
+    color: var(--ink-muted);
+    font-size: 13px;
+    text-decoration: underline;
+    padding: 12px 0 0;
+  }
+  .ghost-btn{
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--ink);
+    padding: 9px 14px;
+    font-size: 13px;
+  }
+  .error-msg{
+    color: var(--stamp);
+    font-size: 12.5px;
+    font-family: 'JetBrains Mono', monospace;
+    margin-top: 8px;
+    display: none;
+  }
+  .success-msg{
+    color: #2d5016;
+    font-size: 12.5px;
+    font-family: 'JetBrains Mono', monospace;
+    margin-top: 8px;
+    display: none;
+  }
+  .bulk-panel{
+    margin-top: 14px;
+    display: none;
+  }
+  .bulk-panel.open{ display: block; }
+  .bulk-panel textarea{
+    width: 100%;
+    min-height: 110px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: #fff;
+    color: var(--ink);
+    resize: vertical;
+  }
+  .bulk-hint{
+    font-size: 12px;
+    color: var(--ink-muted);
+    margin: 6px 0 10px;
+  }
+
+  .actions-row{
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-bottom: 22px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    color: var(--ink-muted);
+  }
+
+  .grid{
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 18px;
+  }
+
+  .card{
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-top: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 20px 16px 16px;
+    text-align: center;
+    position: relative;
+    animation: appear 0.25s ease;
+  }
+  @keyframes appear{
+    from{ opacity: 0; transform: translateY(6px); }
+    to{ opacity: 1; transform: translateY(0); }
+  }
+  .stamp{
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    color: var(--stamp);
+    border: 1.5px dashed var(--stamp);
+    border-radius: 999px;
+    padding: 4px 12px;
+    transform: rotate(-3deg);
+    margin-bottom: 12px;
+  }
+  .qr-box{
+    display: flex;
+    justify-content: center;
+    min-height: 200px;
+    align-items: center;
+    margin-bottom: 12px;
+    background: #FFFFFF;
+    border-radius: 2px;
+  }
+  .qr-box img{
+    max-width: 100%;
+    height: auto;
+  }
+  .qr-loading{
+    font-size: 12px;
+    color: var(--ink-muted);
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse{
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+  }
+  .card-name{
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 4px;
+    word-break: break-word;
+  }
+  .card-url{
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-muted);
+    word-break: break-all;
+    margin-bottom: 14px;
+  }
+  .card-actions{
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+  }
+  .card-actions{
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .card-actions-row{
+    display: flex;
+    gap: 8px;
+  }
+  .card-actions button{
+    flex: 1;
+    padding: 8px 6px;
+    font-size: 12.5px;
+  }
+  .dl-btn{
+    background: var(--ink);
+    color: #fff;
+  }
+  .dl-btn-pdf{
+    background: #C1663E;
+    color: #fff;
+  }
+  .del-btn{
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--ink-muted);
+  }
+
+  .empty-state{
+    text-align: center;
+    color: var(--ink-muted);
+    font-size: 14px;
+    padding: 40px 20px;
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+  }
+
+  @media (max-width: 480px){
+    .add-row{ flex-direction: column; }
+    #cpUrl{ flex: 1 1 auto; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="eyebrow">Generador QR · Bitácora de control</div>
+  <h1>Puntos de Control</h1>
+  <p class="sub">Cada código se guarda en la base de datos del servidor. No vencen, no dependen de ningún servicio externo y no muestran publicidad.</p>
+
+  <div class="badges">
+    <span class="badge">Sin vencimiento</span>
+    <span class="badge">Sin anuncios</span>
+    <span class="badge">Base de datos local</span>
+  </div>
+
+  <div class="panel">
+    <div class="add-row">
+      <input id="cpName" type="text" placeholder="Etiqueta (opcional)">
+      <input id="cpUrl" type="text" placeholder="https://enlace-del-checkpoint.com">
+      <button class="primary-btn" id="addBtn">Agregar punto</button>
+    </div>
+    <div class="error-msg" id="errorMsg"></div>
+    <div class="success-msg" id="successMsg"></div>
+    <button class="link-btn" id="toggleBulk">+ Agregar varios checkpoints a la vez</button>
+    <div class="bulk-panel" id="bulkPanel">
+      <p class="bulk-hint">Un checkpoint por línea. Formato libre: solo el enlace, o "Etiqueta, https://enlace".</p>
+      <textarea id="bulkText" placeholder="Entrada principal, https://ejemplo.com/cp1&#10;https://ejemplo.com/cp2"></textarea>
+      <div style="margin-top:10px;">
+        <button class="primary-btn" id="bulkAddBtn">Agregar lista</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="actions-row" id="actionsRow" style="display:none;">
+    <span id="countLabel"></span>
+    <button class="ghost-btn" id="downloadAllBtn">Descargar todo (.zip)</button>
+    <button class="ghost-btn" id="clearAllBtn">Vaciar lista</button>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <p class="empty-state" id="emptyState">Aún no agregaste ningún punto de control. Escribe un enlace arriba para generar tu primer QR.</p>
+
+</div>
+
+<script>
+  const API_BASE = '/api'; // ruta relativa: funciona en localhost y detrás de ngrok
+  let checkpoints = [];
+
+  function escapeHtml(str){
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function showMessage(type, msg) {
+    const el = type === 'error' ? document.getElementById('errorMsg') : document.getElementById('successMsg');
+    el.textContent = msg;
+    el.style.display = 'block';
+    setTimeout(() => { el.style.display = 'none'; }, 4000);
+  }
+
+  async function loadCheckpoints() {
+    try {
+      const res = await fetch(`${API_BASE}/checkpoints`);
+      checkpoints = await res.json();
+      renderGrid();
+    } catch (err) {
+      showMessage('error', 'Error al cargar checkpoints: ' + err.message);
+    }
+  }
+
+  async function addCheckpoint(name, url) {
+    if (!url || !url.trim()) {
+      showMessage('error', 'El enlace no puede estar vacío.');
+      return false;
+    }
+    try {
+      const res = await fetch(`${API_BASE}/checkpoints`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, url })
+      });
+      if (!res.ok) throw new Error('Error en servidor');
+      const data = await res.json();
+      checkpoints.unshift(data);
+      showMessage('success', 'Checkpoint agregado exitosamente.');
+      renderGrid();
+      return true;
+    } catch (err) {
+      showMessage('error', 'Error al agregar: ' + err.message);
+      return false;
+    }
+  }
+
+  async function deleteCheckpoint(id) {
+    if (!confirm('¿Eliminar este checkpoint?')) return;
+    try {
+      const res = await fetch(`${API_BASE}/checkpoints/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Error en servidor');
+      checkpoints = checkpoints.filter(c => c.id !== id);
+      renderGrid();
+    } catch (err) {
+      showMessage('error', 'Error al eliminar: ' + err.message);
+    }
+  }
+
+  async function downloadSingleQR(id) {
+    try {
+      const res = await fetch(`${API_BASE}/qr/${id}/download`);
+      if (!res.ok) throw new Error('Error');
+      const blob = await res.blob();
+      const checkpoint = checkpoints.find(c => c.id === id);
+      const filename = sanitizeFilename(checkpoint.code + '_' + checkpoint.name) + '.png';
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      showMessage('error', 'Error al descargar QR: ' + err.message);
+    }
+  }
+
+  async function downloadSinglePDF(id) {
+    try {
+      const res = await fetch(`${API_BASE}/qr/${id}/download-pdf`);
+      if (!res.ok) throw new Error('Error');
+      const blob = await res.blob();
+      const checkpoint = checkpoints.find(c => c.id === id);
+      const filename = sanitizeFilename(checkpoint.code + '_' + checkpoint.name) + '.pdf';
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      showMessage('error', 'Error al descargar PDF: ' + err.message);
+    }
+  }
+
+  async function downloadAllQRs() {
+    if (!checkpoints.length) return;
+    try {
+      const zip = new JSZip();
+      for (const cp of checkpoints) {
+        const res = await fetch(`${API_BASE}/qr/${cp.id}/download`);
+        if (!res.ok) continue;
+        const blob = await res.blob();
+        const filename = sanitizeFilename(cp.code + '_' + cp.name) + '.png';
+        zip.file(filename, blob);
+      }
+      const blob = await zip.generateAsync({ type: 'blob' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'puntos-de-control-qr.zip';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      showMessage('error', 'Error al descargar ZIP: ' + err.message);
+    }
+  }
+
+  function sanitizeFilename(str) {
+    return str.replace(/[^a-z0-9_\-]+/gi, '_').replace(/_+/g, '_').slice(0, 60);
+  }
+
+  async function renderGrid() {
+    const grid = document.getElementById('grid');
+    grid.innerHTML = '';
+
+    for (const cp of checkpoints) {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML =
+        '<div class="stamp">' + cp.code + '</div>' +
+        '<div class="qr-box" id="qrbox-' + cp.id + '"><div class="qr-loading">Generando QR...</div></div>' +
+        '<div class="card-name">' + escapeHtml(cp.name) + '</div>' +
+        '<div class="card-url">' + escapeHtml(cp.url) + '</div>' +
+        '<div class="card-actions">' +
+          '<div class="card-actions-row">' +
+            '<button class="dl-btn" data-id="' + cp.id + '">PNG</button>' +
+            '<button class="dl-btn-pdf" data-id="' + cp.id + '">PDF</button>' +
+          '</div>' +
+          '<button class="del-btn" data-id="' + cp.id + '">Eliminar</button>' +
+        '</div>';
+      grid.appendChild(card);
+
+      // Cargar QR
+      try {
+        const res = await fetch(`${API_BASE}/qr/${cp.id}`);
+        const data = await res.json();
+        const qrbox = document.getElementById('qrbox-' + cp.id);
+        const img = document.createElement('img');
+        img.src = data.qr;
+        qrbox.innerHTML = '';
+        qrbox.appendChild(img);
+      } catch (err) {
+        const qrbox = document.getElementById('qrbox-' + cp.id);
+        qrbox.innerHTML = '<div style="color:var(--stamp);">Error al generar QR</div>';
+      }
+    }
+
+    document.getElementById('emptyState').style.display = checkpoints.length ? 'none' : 'block';
+    document.getElementById('actionsRow').style.display = checkpoints.length ? 'flex' : 'none';
+    document.getElementById('countLabel').textContent =
+      checkpoints.length + (checkpoints.length === 1 ? ' punto de control' : ' puntos de control');
+
+    grid.querySelectorAll('.dl-btn').forEach(btn => {
+      btn.addEventListener('click', () => downloadSingleQR(parseInt(btn.dataset.id)));
+    });
+    grid.querySelectorAll('.dl-btn-pdf').forEach(btn => {
+      btn.addEventListener('click', () => downloadSinglePDF(parseInt(btn.dataset.id)));
+    });
+    grid.querySelectorAll('.del-btn').forEach(btn => {
+      btn.addEventListener('click', () => deleteCheckpoint(parseInt(btn.dataset.id)));
+    });
+  }
+
+  // Event listeners
+  document.getElementById('addBtn').addEventListener('click', async () => {
+    const name = document.getElementById('cpName').value;
+    const url = document.getElementById('cpUrl').value;
+    if (await addCheckpoint(name, url)) {
+      document.getElementById('cpName').value = '';
+      document.getElementById('cpUrl').value = '';
+    }
+  });
+
+  document.getElementById('cpUrl').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('addBtn').click();
+  });
+
+  document.getElementById('toggleBulk').addEventListener('click', () => {
+    document.getElementById('bulkPanel').classList.toggle('open');
+  });
+
+  document.getElementById('bulkAddBtn').addEventListener('click', async () => {
+    const lines = document.getElementById('bulkText').value.split('\n');
+    let added = 0;
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+      const idx = trimmed.indexOf(',');
+      let name = '', url = trimmed;
+      if (idx > -1) {
+        name = trimmed.slice(0, idx);
+        url = trimmed.slice(idx + 1);
+      }
+      if (await addCheckpoint(name, url)) added++;
+    }
+    if (added) {
+      document.getElementById('bulkText').value = '';
+      document.getElementById('bulkPanel').classList.remove('open');
+    }
+  });
+
+  document.getElementById('downloadAllBtn').addEventListener('click', downloadAllQRs);
+
+  document.getElementById('clearAllBtn').addEventListener('click', () => {
+    if (confirm('¿Eliminar TODOS los checkpoints?')) {
+      Promise.all(checkpoints.map(c => fetch(`${API_BASE}/checkpoints/${c.id}`, { method: 'DELETE' })))
+        .then(() => loadCheckpoints());
+    }
+  });
+
+  // Cargar datos al inicio
+  loadCheckpoints();
+</script>
+</body>
+</html>
