@@ -9,7 +9,7 @@ if not exist "node_modules" (
   call npm install
 )
 
-:: --- CONFIGURA AQUI TU USUARIO Y CONTRASENA ---
+:: --- CUENTA DE ADMINISTRADOR INICIAL (usuario y contrasena, minimo 8 caracteres) ---
 set AUTH_USER=admin
 set AUTH_PASS=cambia-esta-clave
 :: ---------------------------------------------

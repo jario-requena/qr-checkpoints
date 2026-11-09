@@ -1,24 +1,9 @@
-# Publicar QR Checkpoints con ngrok
+# Publicar con ngrok (desde tu PC)
 
-## Una sola vez
-1. Crea cuenta gratis en https://ngrok.com y descarga ngrok.
-2. Conecta tu cuenta (token en https://dashboard.ngrok.com/get-started/your-authtoken):
-   `ngrok config add-authtoken TU_TOKEN`
-3. (Recomendado) Abre `start-ngrok.bat` y cambia `AUTH_USER` y `AUTH_PASS`.
+1. Crea cuenta gratis en https://ngrok.com y ejecuta `ngrok config add-authtoken TU_TOKEN`.
+2. Abre `start-ngrok.bat` y cambia `AUTH_USER` / `AUTH_PASS` (cuenta de administrador inicial, mín. 8 caracteres).
+3. Doble clic en `start-ngrok.bat` (Mac/Linux: `bash start-ngrok.sh`).
+4. Copia la URL `https://xxxx.ngrok-free.app` de la ventana de ngrok. Pulsa "Visit Site" en el aviso de ngrok e inicia sesión.
 
-## Cada vez que quieras publicarla
-- Windows: doble clic en `start-ngrok.bat`
-- Mac/Linux: `bash start-ngrok.sh`
-
-En la ventana de ngrok verás una línea `Forwarding https://xxxx.ngrok-free.app -> http://localhost:3000`.
-Esa URL es tu página web. Al abrirla, ngrok (plan gratis) muestra un aviso: pulsa "Visit Site".
-Luego el navegador pedirá el usuario y contraseña que configuraste.
-
-## Dominio fijo (gratis)
-Con la URL aleatoria cambia en cada arranque. En el dashboard de ngrok (Domains) puedes reclamar un dominio gratis y usarlo:
-`ngrok http --url=tu-dominio.ngrok-free.app 3000`
-
-## Notas
-- La página solo está disponible mientras tu PC y el script estén encendidos.
-- Los datos viven en `db/checkpoints.db` de tu PC.
-- Sin AUTH_USER/AUTH_PASS cualquiera con el enlace puede crear y borrar QR.
+La página solo está disponible mientras tu PC y el script estén encendidos. Los datos quedan en `db/checkpoints.db`.
+Las cuentas de otros usuarios se crean desde **Administrar usuarios** dentro de la página.

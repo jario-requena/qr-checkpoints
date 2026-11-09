@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Iniciar sesión · Puntos de Control</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EFEAD9; --paper-line:rgba(32,38,46,0.05); --ink:#20262E; --ink-muted:#756C5C;
+    --card:#F8F4E8; --border:#D8CFB8; --stamp:#B23A2E; --radius:4px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background-color:var(--paper);
+    background-image:linear-gradient(var(--paper-line) 1px, transparent 1px),linear-gradient(90deg, var(--paper-line) 1px, transparent 1px);
+    background-size:28px 28px;
+    color:var(--ink); font-family:'Inter',sans-serif; min-height:100vh;
+    display:flex; align-items:center; justify-content:center; padding:24px;
+  }
+  .box{ width:100%; max-width:380px; }
+  .eyebrow{ font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--stamp); font-weight:700; margin-bottom:10px; }
+  h1{ font-family:'JetBrains Mono',monospace; font-size:30px; margin:0 0 8px; letter-spacing:-.01em; }
+  p.sub{ color:var(--ink-muted); font-size:14px; line-height:1.6; margin:0 0 22px; }
+  .panel{ background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:22px; }
+  label{ display:block; font-size:12.5px; font-weight:600; margin:0 0 6px; }
+  input{
+    width:100%; font-family:'Inter',sans-serif; font-size:14px; padding:11px 13px;
+    border:1px solid var(--border); border-radius:var(--radius); background:#fff; color:var(--ink); margin-bottom:14px;
+  }
+  input:focus, button:focus-visible{ outline:2px solid var(--stamp); outline-offset:1px; }
+  button{
+    width:100%; background:var(--stamp); color:#fff; font-family:'Inter',sans-serif; font-weight:600; font-size:14px;
+    padding:12px; border:1px solid transparent; border-radius:var(--radius); cursor:pointer;
+  }
+  button:disabled{ opacity:.5; cursor:not-allowed; }
+  .error{ color:var(--stamp); font-family:'JetBrains Mono',monospace; font-size:12.5px; margin-top:12px; min-height:1em; }
+  .note{ color:var(--ink-muted); font-size:12px; margin-top:16px; text-align:center; }
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="eyebrow">Generador QR · Bitácora de control</div>
+  <h1>Iniciar sesión</h1>
+  <p class="sub">Accede con la cuenta que te dio el administrador.</p>
+  <form class="panel" id="form">
+    <label for="u">Usuario</label>
+    <input id="u" type="text" autocomplete="username" autocapitalize="none" required autofocus>
+    <label for="p">Contraseña</label>
+    <input id="p" type="password" autocomplete="current-password" required>
+    <button id="btn" type="submit">Entrar</button>
+    <div class="error" id="err" role="alert"></div>
+  </form>
+  <p class="note">¿No tienes cuenta? Pídesela al administrador.</p>
+</div>
+<script>
+  // Si ya hay sesión, ir directo a la app
+  fetch('/api/me').then(r => { if (r.ok) location.replace('/'); }).catch(() => {});
+
+  document.getElementById('form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('btn');
+    const err = document.getElementById('err');
+    err.textContent = '';
+    btn.disabled = true;
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: document.getElementById('u').value,
+          password: document.getElementById('p').value
+        })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) { location.replace('/'); return; }
+      err.textContent = data.error || 'No se pudo iniciar sesión';
+    } catch (ex) {
+      err.textContent = 'No se pudo conectar con el servidor';
+    }
+    btn.disabled = false;
+  });
+</script>
+</body>
+</html>

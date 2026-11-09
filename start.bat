@@ -12,6 +12,10 @@ if not exist "node_modules" (
   echo.
 )
 
+:: Administrador inicial (solo se usa la primera vez que se crea la base de datos). CAMBIA la clave.
+if not defined AUTH_USER set AUTH_USER=admin
+if not defined AUTH_PASS set AUTH_PASS=cambia-esta-clave
+
 echo ✓ Iniciando servidor en http://localhost:3000
 echo ✓ Presiona Ctrl+C para detener
 echo.

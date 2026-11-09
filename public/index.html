@@ -306,19 +306,50 @@
     .add-row{ flex-direction: column; }
     #cpUrl{ flex: 1 1 auto; }
   }
+
+  .userbar{
+    display:flex; align-items:center; justify-content:flex-end; gap:14px; flex-wrap:wrap;
+    font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--ink-muted);
+    margin:-20px 0 26px;
+  }
+  .userbar b{ color:var(--ink); }
+  .userbar a, .userbar button{
+    background:none; border:none; padding:0; font:inherit; color:var(--ink-muted);
+    text-decoration:underline; cursor:pointer;
+  }
+  .userbar a:hover, .userbar button:hover{ color:var(--stamp); }
+  #pwPanel{ display:none; }
+  #pwPanel.open{ display:block; }
 </style>
 </head>
 <body>
 <div class="app">
 
+  <div class="userbar">
+    <span>Sesión: <b id="meName">…</b></span>
+    <a href="/admin.html" id="adminLink" style="display:none;">Administrar usuarios</a>
+    <button id="pwToggle" type="button">Cambiar contraseña</button>
+    <button id="logoutBtn" type="button">Cerrar sesión</button>
+  </div>
+
+  <div class="panel" id="pwPanel">
+    <div class="add-row">
+      <input id="pwCurrent" type="password" placeholder="Contraseña actual" autocomplete="current-password">
+      <input id="pwNew" type="password" placeholder="Nueva contraseña (mín. 8)" autocomplete="new-password">
+      <button class="primary-btn" id="pwSave">Guardar</button>
+    </div>
+    <div class="error-msg" id="pwErr"></div>
+    <div class="success-msg" id="pwOk"></div>
+  </div>
+
   <div class="eyebrow">Generador QR · Bitácora de control</div>
   <h1>Puntos de Control</h1>
-  <p class="sub">Cada código se guarda en la base de datos del servidor. No vencen, no dependen de ningún servicio externo y no muestran publicidad.</p>
+  <p class="sub">Cada código se guarda en tu cuenta. No vencen, no dependen de ningún servicio externo y no muestran publicidad.</p>
 
   <div class="badges">
     <span class="badge">Sin vencimiento</span>
     <span class="badge">Sin anuncios</span>
-    <span class="badge">Base de datos local</span>
+    <span class="badge">Cuenta privada</span>
   </div>
 
   <div class="panel">
@@ -352,7 +383,14 @@
 </div>
 
 <script>
-  const API_BASE = '/api'; // ruta relativa: funciona en localhost y detrás de ngrok
+  const API_BASE = '/api'; // ruta relativa: funciona en localhost y en la nube
+
+  // fetch que redirige al login si la sesión expiró
+  async function apiFetch(url, opts) {
+    const res = await fetch(url, opts);
+    if (res.status === 401) { location.replace('/login.html'); throw new Error('Sesión expirada'); }
+    return res;
+  }
   let checkpoints = [];
 
   function escapeHtml(str){
@@ -370,7 +408,7 @@
 
   async function loadCheckpoints() {
     try {
-      const res = await fetch(`${API_BASE}/checkpoints`);
+      const res = await apiFetch(`${API_BASE}/checkpoints`);
       checkpoints = await res.json();
       renderGrid();
     } catch (err) {
@@ -384,12 +422,15 @@
       return false;
     }
     try {
-      const res = await fetch(`${API_BASE}/checkpoints`, {
+      const res = await apiFetch(`${API_BASE}/checkpoints`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, url })
       });
-      if (!res.ok) throw new Error('Error en servidor');
+      if (!res.ok) {
+        const e = await res.json().catch(() => ({}));
+        throw new Error(e.error || 'Error en servidor');
+      }
       const data = await res.json();
       checkpoints.unshift(data);
       showMessage('success', 'Checkpoint agregado exitosamente.');
@@ -404,7 +445,7 @@
   async function deleteCheckpoint(id) {
     if (!confirm('¿Eliminar este checkpoint?')) return;
     try {
-      const res = await fetch(`${API_BASE}/checkpoints/${id}`, { method: 'DELETE' });
+      const res = await apiFetch(`${API_BASE}/checkpoints/${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Error en servidor');
       checkpoints = checkpoints.filter(c => c.id !== id);
       renderGrid();
@@ -415,7 +456,7 @@
 
   async function downloadSingleQR(id) {
     try {
-      const res = await fetch(`${API_BASE}/qr/${id}/download`);
+      const res = await apiFetch(`${API_BASE}/qr/${id}/download`);
       if (!res.ok) throw new Error('Error');
       const blob = await res.blob();
       const checkpoint = checkpoints.find(c => c.id === id);
@@ -435,7 +476,7 @@
 
   async function downloadSinglePDF(id) {
     try {
-      const res = await fetch(`${API_BASE}/qr/${id}/download-pdf`);
+      const res = await apiFetch(`${API_BASE}/qr/${id}/download-pdf`);
       if (!res.ok) throw new Error('Error');
       const blob = await res.blob();
       const checkpoint = checkpoints.find(c => c.id === id);
@@ -458,7 +499,7 @@
     try {
       const zip = new JSZip();
       for (const cp of checkpoints) {
-        const res = await fetch(`${API_BASE}/qr/${cp.id}/download`);
+        const res = await apiFetch(`${API_BASE}/qr/${cp.id}/download`);
         if (!res.ok) continue;
         const blob = await res.blob();
         const filename = sanitizeFilename(cp.code + '_' + cp.name) + '.png';
@@ -505,7 +546,7 @@
 
       // Cargar QR
       try {
-        const res = await fetch(`${API_BASE}/qr/${cp.id}`);
+        const res = await apiFetch(`${API_BASE}/qr/${cp.id}`);
         const data = await res.json();
         const qrbox = document.getElementById('qrbox-' + cp.id);
         const img = document.createElement('img');
@@ -576,9 +617,46 @@
 
   document.getElementById('clearAllBtn').addEventListener('click', () => {
     if (confirm('¿Eliminar TODOS los checkpoints?')) {
-      Promise.all(checkpoints.map(c => fetch(`${API_BASE}/checkpoints/${c.id}`, { method: 'DELETE' })))
+      Promise.all(checkpoints.map(c => apiFetch(`${API_BASE}/checkpoints/${c.id}`, { method: 'DELETE' })))
         .then(() => loadCheckpoints());
     }
+  });
+
+  // Barra de usuario
+  (async () => {
+    try {
+      const me = await (await apiFetch(`${API_BASE}/me`)).json();
+      document.getElementById('meName').textContent = me.username;
+      if (me.isAdmin) document.getElementById('adminLink').style.display = 'inline';
+    } catch (e) {}
+  })();
+
+  document.getElementById('logoutBtn').addEventListener('click', async () => {
+    await fetch(`${API_BASE}/logout`, { method: 'POST' });
+    location.replace('/login.html');
+  });
+
+  document.getElementById('pwToggle').addEventListener('click', () => {
+    document.getElementById('pwPanel').classList.toggle('open');
+  });
+
+  document.getElementById('pwSave').addEventListener('click', async () => {
+    const err = document.getElementById('pwErr'), ok = document.getElementById('pwOk');
+    err.style.display = ok.style.display = 'none';
+    try {
+      const res = await apiFetch(`${API_BASE}/me/password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          current: document.getElementById('pwCurrent').value,
+          password: document.getElementById('pwNew').value
+        })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Error');
+      ok.textContent = 'Contraseña actualizada.'; ok.style.display = 'block';
+      document.getElementById('pwCurrent').value = document.getElementById('pwNew').value = '';
+    } catch (e) { err.textContent = e.message; err.style.display = 'block'; }
   });
 
   // Cargar datos al inicio

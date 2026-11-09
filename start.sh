@@ -13,6 +13,10 @@ if [ ! -d "node_modules" ]; then
   echo ""
 fi
 
+# Administrador inicial (solo se usa la primera vez que se crea la base de datos). CAMBIA la clave.
+export AUTH_USER="${AUTH_USER:-admin}"
+export AUTH_PASS="${AUTH_PASS:-cambia-esta-clave}"
+
 echo "✓ Iniciando servidor en http://localhost:3000"
 echo "✓ Presiona Ctrl+C para detener"
 echo ""
