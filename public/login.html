@@ -1,87 +1,65 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Iniciar sesión · Puntos de Control</title>
+<title>Iniciar sesión · MisQR</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --paper:#EFEAD9; --paper-line:rgba(32,38,46,0.05); --ink:#20262E; --ink-muted:#756C5C;
-    --card:#F8F4E8; --border:#D8CFB8; --stamp:#B23A2E; --radius:4px;
-  }
-  *{ box-sizing:border-box; }
-  html,body{ margin:0; padding:0; }
-  body{
-    background-color:var(--paper);
-    background-image:linear-gradient(var(--paper-line) 1px, transparent 1px),linear-gradient(90deg, var(--paper-line) 1px, transparent 1px);
-    background-size:28px 28px;
-    color:var(--ink); font-family:'Inter',sans-serif; min-height:100vh;
-    display:flex; align-items:center; justify-content:center; padding:24px;
-  }
-  .box{ width:100%; max-width:380px; }
-  .eyebrow{ font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--stamp); font-weight:700; margin-bottom:10px; }
-  h1{ font-family:'JetBrains Mono',monospace; font-size:30px; margin:0 0 8px; letter-spacing:-.01em; }
-  p.sub{ color:var(--ink-muted); font-size:14px; line-height:1.6; margin:0 0 22px; }
-  .panel{ background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:22px; }
-  label{ display:block; font-size:12.5px; font-weight:600; margin:0 0 6px; }
-  input{
-    width:100%; font-family:'Inter',sans-serif; font-size:14px; padding:11px 13px;
-    border:1px solid var(--border); border-radius:var(--radius); background:#fff; color:var(--ink); margin-bottom:14px;
-  }
-  input:focus, button:focus-visible{ outline:2px solid var(--stamp); outline-offset:1px; }
-  button{
-    width:100%; background:var(--stamp); color:#fff; font-family:'Inter',sans-serif; font-weight:600; font-size:14px;
-    padding:12px; border:1px solid transparent; border-radius:var(--radius); cursor:pointer;
-  }
-  button:disabled{ opacity:.5; cursor:not-allowed; }
-  .error{ color:var(--stamp); font-family:'JetBrains Mono',monospace; font-size:12.5px; margin-top:12px; min-height:1em; }
-  .note{ color:var(--ink-muted); font-size:12px; margin-top:16px; text-align:center; }
-</style>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400..700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="/theme.js"></script>
+<style>.material-symbols-outlined{ font-size:inherit; line-height:1; }</style>
 </head>
-<body>
-<div class="box">
-  <div class="eyebrow">Generador QR · Bitácora de control</div>
-  <h1>Iniciar sesión</h1>
-  <p class="sub">Accede con la cuenta que te dio el administrador.</p>
-  <form class="panel" id="form">
-    <label for="u">Usuario</label>
-    <input id="u" type="text" autocomplete="username" autocapitalize="none" required autofocus>
-    <label for="p">Contraseña</label>
-    <input id="p" type="password" autocomplete="current-password" required>
-    <button id="btn" type="submit">Entrar</button>
-    <div class="error" id="err" role="alert"></div>
-  </form>
-  <p class="note">¿No tienes cuenta? Pídesela al administrador.</p>
-</div>
+<body class="bg-surface font-body-md text-body-md text-on-surface antialiased min-h-screen flex flex-col">
+<div class="fixed inset-0 pointer-events-none opacity-40 bg-[radial-gradient(#8c716e_0.75px,transparent_0.75px)] [background-size:24px_24px]"></div>
+
+<header class="relative z-10 h-20 px-margin-sm sm:px-margin flex items-center">
+  <a href="/" class="flex items-center gap-space-sm">
+    <span class="material-symbols-outlined text-primary text-[28px]">qr_code_2</span>
+    <span class="font-headline-sm text-headline-sm text-primary uppercase">MisQR</span>
+  </a>
+</header>
+
+<main class="relative z-10 flex-1 flex items-center justify-center px-margin-sm py-space-xl">
+  <div class="w-full max-w-lg bg-surface-container p-space-lg rounded-xl shadow-lg relative overflow-hidden">
+    <div class="absolute inset-0 pointer-events-none opacity-20 bg-[radial-gradient(#8c716e_0.5px,transparent_0.5px)] [background-size:16px_16px]"></div>
+    <div class="relative z-10">
+      <div class="text-center mb-space-md">
+        <span class="font-label-sm text-label-sm text-primary uppercase tracking-widest font-bold">Generador QR · Bitácora de control</span>
+        <h1 class="font-headline-md text-headline-md text-on-surface mt-1 mb-space-xs">Iniciar sesión</h1>
+        <p class="font-body-sm text-body-sm text-secondary">Accede con la cuenta que te dio el administrador.</p>
+      </div>
+      <form class="space-y-space-md" id="login-form">
+        <div>
+          <label for="login-user" class="block font-label-sm text-label-sm uppercase text-on-surface mb-1">Usuario</label>
+          <input id="login-user" class="w-full h-11 px-space-md bg-surface font-body-md text-body-md text-on-surface rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-container transition-all" placeholder="tu.usuario" required autofocus type="text" autocomplete="username" autocapitalize="none">
+        </div>
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label for="login-pass" class="block font-label-sm text-label-sm uppercase text-on-surface">Contraseña</label>
+            <a class="font-label-sm text-label-sm text-primary hover:underline uppercase" href="/recuperar.html">¿Olvidaste tu contraseña?</a>
+          </div>
+          <input id="login-pass" class="w-full h-11 px-space-md bg-surface font-body-md text-body-md text-on-surface rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-container transition-all" placeholder="••••••••••••" required type="password" autocomplete="current-password">
+        </div>
+        <button class="w-full h-12 bg-primary hover:bg-primary-container text-on-primary font-label-md text-label-md uppercase rounded-lg shadow-sm transition-all hover:shadow-md active:scale-[0.99] flex items-center justify-center gap-space-xs font-bold disabled:opacity-50" type="submit">
+          <span>Entrar al sistema</span>
+          <span class="material-symbols-outlined text-[18px]">login</span>
+        </button>
+      </form>
+      <div class="hidden mt-space-sm p-space-sm bg-primary/10 rounded-lg text-center font-mono-data text-xs text-primary font-bold" id="login-error" role="alert"></div>
+      <div class="text-center mt-space-lg font-body-sm text-body-sm text-secondary">
+        ¿No tienes cuenta? <a class="text-primary font-bold hover:underline" href="/solicitar.html">Solicítala al administrador.</a>
+      </div>
+    </div>
+  </div>
+</main>
+
 <script>
   // Si ya hay sesión, ir directo a la app
   fetch('/api/me').then(r => { if (r.ok) location.replace('/'); }).catch(() => {});
-
-  document.getElementById('form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const btn = document.getElementById('btn');
-    const err = document.getElementById('err');
-    err.textContent = '';
-    btn.disabled = true;
-    try {
-      const res = await fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: document.getElementById('u').value,
-          password: document.getElementById('p').value
-        })
-      });
-      const data = await res.json().catch(() => ({}));
-      if (res.ok) { location.replace('/'); return; }
-      err.textContent = data.error || 'No se pudo iniciar sesión';
-    } catch (ex) {
-      err.textContent = 'No se pudo conectar con el servidor';
-    }
-    btn.disabled = false;
-  });
 </script>
+<script src="/login-form.js"></script>
 </body>
 </html>

@@ -40,6 +40,30 @@ export async function initDb(db, { adminUser, adminPass, resetAdmin } = {}) {
     )
   `);
 
+  const userCols = (await db.execute("PRAGMA table_info('users')")).rows.map(r => r.name);
+  if (!userCols.includes('email')) await db.execute('ALTER TABLE users ADD COLUMN email TEXT');
+  await db.execute('CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users (lower(email)) WHERE email IS NOT NULL');
+
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS password_resets (
+      user_id INTEGER PRIMARY KEY,
+      code_hash TEXT NOT NULL,
+      expires_at INTEGER NOT NULL,
+      attempts INTEGER NOT NULL DEFAULT 0
+    )
+  `);
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS account_requests (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      email TEXT NOT NULL,
+      username TEXT,
+      message TEXT,
+      status TEXT NOT NULL DEFAULT 'pending',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
   // Administrador inicial
   let admin = (await db.execute('SELECT id FROM users WHERE is_admin = 1 ORDER BY id LIMIT 1')).rows[0];
   if (!admin) {
@@ -103,5 +127,6 @@ export async function initDb(db, { adminUser, adminPass, resetAdmin } = {}) {
 
   // Limpiar sesiones vencidas
   await db.execute({ sql: 'DELETE FROM sessions WHERE expires_at < ?', args: [Date.now()] });
+  await db.execute({ sql: 'DELETE FROM password_resets WHERE expires_at < ?', args: [Date.now()] });
   return adminId;
 }

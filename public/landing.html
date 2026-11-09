@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MisQR · Códigos QR sin anuncios ni caducidad</title>
+<meta name="description" content="Genera códigos QR permanentes para tus puntos de control: sin anuncios, sin membresías y sin caducidad. Descarga en PNG o PDF.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400..700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="/theme.js"></script>
+<style>
+  html{ scroll-behavior:smooth; }
+  body{ overscroll-behavior:none; }
+  .material-symbols-outlined{ font-size:inherit; line-height:1; }
+</style>
+</head>
+<body class="bg-surface font-body-md text-body-md text-on-surface antialiased">
+
+<header class="fixed top-0 left-0 w-full z-50 bg-surface/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(43,42,39,0.06)]">
+  <div class="h-20 w-full px-margin-sm sm:px-margin flex items-center justify-between gap-gutter">
+    <a href="/" class="flex items-center gap-space-sm">
+      <span class="material-symbols-outlined text-primary text-[28px]">qr_code_2</span>
+      <span class="font-headline-sm text-headline-sm text-primary uppercase">MisQR</span>
+    </a>
+    <nav class="hidden lg:flex items-center gap-space-lg">
+      <a class="font-label-md text-label-md uppercase text-on-surface-variant hover:text-on-surface px-space-sm py-space-xs rounded-lg transition-colors" href="#caracteristicas">Características</a>
+      <a class="font-label-md text-label-md uppercase text-on-surface-variant hover:text-on-surface px-space-sm py-space-xs rounded-lg transition-colors" href="#como-funciona">Cómo funciona</a>
+      <a class="font-label-md text-label-md uppercase text-on-surface-variant hover:text-on-surface px-space-sm py-space-xs rounded-lg transition-colors" href="#casos">Casos de uso</a>
+    </nav>
+    <a class="inline-flex items-center justify-center h-10 px-space-md bg-primary hover:bg-primary-container text-on-primary font-label-md text-label-md uppercase rounded-lg transition-colors shadow-[0_2px_8px_-2px_rgba(43,42,39,0.06)]" href="/login.html">Iniciar sesión</a>
+  </div>
+</header>
+
+<main class="w-full pt-20 bg-surface">
+<div class="flex flex-col w-full relative">
+  <div class="absolute inset-0 pointer-events-none opacity-40 bg-[radial-gradient(#8c716e_0.75px,transparent_0.75px)] [background-size:24px_24px] z-0"></div>
+
+  <!-- HERO -->
+  <section class="relative z-10 w-full px-margin-sm sm:px-margin pt-space-xl pb-space-xl overflow-hidden">
+    <div class="max-w-7xl mx-auto flex flex-col items-center text-center">
+      <div class="inline-flex items-center gap-space-xs bg-surface-container-high px-space-md py-1.5 rounded-lg shadow-sm mb-space-lg">
+        <span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+        <span class="font-label-sm text-label-sm tracking-widest text-primary uppercase">Generador QR · Bitácora de control</span>
+      </div>
+      <h1 class="font-headline-xl-mobile text-headline-xl-mobile sm:font-headline-xl sm:text-headline-xl text-on-surface max-w-4xl tracking-tight mb-space-md">
+        Genera códigos QR sin&nbsp;<span class="text-primary-container">anuncios, membresías ni caducidad.</span>
+      </h1>
+      <p class="font-body-lg text-body-lg text-secondary max-w-2xl mb-space-lg">
+        Convierte cualquier enlace en un QR permanente para tus puntos de control. Descárgalo en PNG o PDF, o unifica varios en una sola hoja lista para imprimir.
+      </p>
+      <div class="flex flex-wrap items-center justify-center gap-space-md mb-space-xl">
+        <a class="inline-flex items-center justify-center gap-space-xs h-12 px-space-lg bg-primary hover:bg-primary-container text-on-primary font-label-md text-label-md uppercase rounded-lg shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5" href="/solicitar.html">
+          <span class="material-symbols-outlined text-[18px]">person_add</span>
+          <span>Solicitar cuenta</span>
+        </a>
+      </div>
+
+      <!-- Muestra de hoja unificada -->
+      <div class="w-full max-w-4xl bg-surface-container-lowest rounded-xl shadow-xl overflow-hidden text-left">
+        <div class="flex items-center justify-between px-space-md py-space-sm bg-surface-container-high font-mono-data text-xs text-secondary">
+          <span class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-[16px] text-primary">picture_as_pdf</span> qr-unificados.pdf</span>
+          <span class="uppercase font-bold text-primary">3 puntos de control</span>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-space-md p-space-lg">
+          <div class="p-space-md border border-dashed border-outline-variant rounded-lg text-center">
+            <div class="font-label-sm text-label-sm text-primary">CP-001</div>
+            <div class="font-bold text-on-surface text-sm mb-space-sm truncate">Entrada principal</div>
+            <span class="material-symbols-outlined text-[110px] text-on-surface">qr_code_2</span>
+          </div>
+          <div class="p-space-md border border-dashed border-outline-variant rounded-lg text-center">
+            <div class="font-label-sm text-label-sm text-primary">CP-002</div>
+            <div class="font-bold text-on-surface text-sm mb-space-sm truncate">Cuarto de máquinas</div>
+            <span class="material-symbols-outlined text-[110px] text-on-surface">qr_code_2</span>
+          </div>
+          <div class="p-space-md border border-dashed border-outline-variant rounded-lg text-center">
+            <div class="font-label-sm text-label-sm text-primary">CP-003</div>
+            <div class="font-bold text-on-surface text-sm mb-space-sm truncate">Bodega norte</div>
+            <span class="material-symbols-outlined text-[110px] text-on-surface">qr_code_2</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BANDA DE DATOS -->
+  <section class="w-full bg-surface-container-high py-space-lg px-margin-sm sm:px-margin relative z-10">
+    <div class="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-gutter-sm sm:gap-gutter text-left">
+      <div class="p-space-md bg-surface rounded-lg shadow-sm">
+        <div class="font-headline-lg text-headline-lg text-primary tracking-tight mb-1">0</div>
+        <div class="font-label-sm text-label-sm uppercase text-on-surface">Anuncios</div>
+        <p class="font-body-sm text-body-sm text-secondary mt-1">Tus QR llevan directo a tu enlace.</p>
+      </div>
+      <div class="p-space-md bg-surface rounded-lg shadow-sm">
+        <div class="font-headline-lg text-headline-lg text-tertiary-container tracking-tight mb-1">∞</div>
+        <div class="font-label-sm text-label-sm uppercase text-on-surface">Vigencia</div>
+        <p class="font-body-sm text-body-sm text-secondary mt-1">Los códigos nunca caducan.</p>
+      </div>
+      <div class="p-space-md bg-surface rounded-lg shadow-sm">
+        <div class="font-headline-lg text-headline-lg text-primary tracking-tight mb-1">PNG·PDF</div>
+        <div class="font-label-sm text-label-sm uppercase text-on-surface">Formatos</div>
+        <p class="font-body-sm text-body-sm text-secondary mt-1">Individual, ZIP o unificado.</p>
+      </div>
+      <div class="p-space-md bg-surface rounded-lg shadow-sm">
+        <div class="font-headline-lg text-headline-lg text-tertiary-container tracking-tight mb-1">CP-001</div>
+        <div class="font-label-sm text-label-sm uppercase text-on-surface">Códigos correlativos</div>
+        <p class="font-body-sm text-body-sm text-secondary mt-1">Cada punto con su código propio.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CARACTERÍSTICAS -->
+  <section class="w-full px-margin-sm sm:px-margin py-space-xl relative z-10" id="caracteristicas">
+    <div class="max-w-7xl mx-auto">
+      <div class="flex flex-col md:flex-row md:items-end justify-between mb-space-xl">
+        <div>
+          <span class="font-label-sm text-label-sm text-primary uppercase">Capacidades</span>
+          <h2 class="font-headline-md text-headline-md sm:font-headline-lg sm:text-headline-lg text-on-surface tracking-tight mt-1">Hecho para rondines, inspección y control.</h2>
+        </div>
+        <p class="font-body-md text-body-md text-secondary max-w-md mt-space-sm md:mt-0">Reemplaza enlaces largos por códigos QR permanentes, organizados en tu cuenta.</p>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-gutter">
+        <div class="md:col-span-8 p-space-lg bg-surface-container rounded-xl shadow-sm flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-space-sm">
+              <span class="font-label-sm text-label-sm text-primary uppercase font-bold">Hojas unificadas</span>
+              <span class="material-symbols-outlined text-primary text-[24px]">grid_view</span>
+            </div>
+            <h3 class="font-headline-md text-headline-md text-on-surface mb-space-xs">Varios QR en un solo PDF o PNG</h3>
+            <p class="font-body-md text-body-md text-secondary max-w-2xl">Selecciona dos o más códigos, existentes o recién creados, y descárgalos juntos en una hoja con la etiqueta encima de cada QR. Lista para imprimir y recortar.</p>
+          </div>
+          <div class="mt-space-lg p-space-md bg-surface-container-lowest rounded-lg grid grid-cols-1 sm:grid-cols-3 gap-space-sm font-mono-data text-xs">
+            <div class="p-space-sm bg-surface-container-low rounded-lg">
+              <div class="text-secondary mb-1">PASO 1</div>
+              <div class="font-bold text-on-surface truncate">Selecciona los QR</div>
+            </div>
+            <div class="p-space-sm bg-surface-container-low rounded-lg">
+              <div class="text-secondary mb-1">PASO 2</div>
+              <div class="font-bold text-on-surface truncate">Elige PNG o PDF</div>
+            </div>
+            <div class="p-space-sm bg-surface-container-high rounded-lg">
+              <div class="text-primary font-bold mb-1">RESULTADO</div>
+              <div class="font-bold text-on-surface truncate">Una hoja etiquetada</div>
+            </div>
+          </div>
+        </div>
+        <div class="md:col-span-4 p-space-lg bg-surface-container rounded-xl shadow-sm flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-space-sm">
+              <span class="font-label-sm text-label-sm text-primary uppercase font-bold">Cuenta privada</span>
+              <span class="material-symbols-outlined text-primary text-[24px]">security</span>
+            </div>
+            <h3 class="font-headline-md text-headline-md text-on-surface mb-space-xs">Tus QR, solo tuyos</h3>
+            <p class="font-body-md text-body-md text-secondary">Cada usuario ve únicamente sus propios códigos. Las contraseñas se guardan cifradas y puedes recuperarlas con un código enviado a tu correo.</p>
+          </div>
+          <div class="mt-space-lg p-space-md bg-surface-container-lowest rounded-lg space-y-space-xs font-mono-data text-xs">
+            <div class="flex items-center justify-between text-secondary"><span>CONTRASEÑAS:</span><span class="font-bold text-primary">CIFRADAS</span></div>
+            <div class="flex items-center justify-between text-secondary"><span>RECUPERACIÓN:</span><span class="font-bold text-on-surface">CÓDIGO 6 DÍGITOS</span></div>
+            <div class="flex items-center justify-between text-secondary"><span>CADUCIDAD QR:</span><span class="font-bold text-on-surface">NUNCA</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CÓMO FUNCIONA -->
+  <section class="w-full bg-surface-container-low px-margin-sm sm:px-margin py-space-xl relative z-10" id="como-funciona">
+    <div class="max-w-7xl mx-auto">
+      <span class="font-label-sm text-label-sm text-primary uppercase">Cómo funciona</span>
+      <h2 class="font-headline-md text-headline-md sm:font-headline-lg sm:text-headline-lg text-on-surface tracking-tight mt-1 mb-space-xl">Tres pasos, sin complicaciones.</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+        <div class="p-space-lg bg-surface rounded-xl shadow-sm">
+          <div class="font-mono-data text-primary font-bold mb-space-sm">01</div>
+          <h3 class="font-headline-sm text-headline-sm mb-space-xs">Solicita tu cuenta</h3>
+          <p class="font-body-sm text-body-sm text-secondary">Envía tu solicitud y el administrador crea tu acceso.</p>
+        </div>
+        <div class="p-space-lg bg-surface rounded-xl shadow-sm">
+          <div class="font-mono-data text-primary font-bold mb-space-sm">02</div>
+          <h3 class="font-headline-sm text-headline-sm mb-space-xs">Pega tus enlaces</h3>
+          <p class="font-body-sm text-body-sm text-secondary">Uno a uno o en lista, con una etiqueta para cada punto de control.</p>
+        </div>
+        <div class="p-space-lg bg-surface rounded-xl shadow-sm">
+          <div class="font-mono-data text-primary font-bold mb-space-sm">03</div>
+          <h3 class="font-headline-sm text-headline-sm mb-space-xs">Descarga e imprime</h3>
+          <p class="font-body-sm text-body-sm text-secondary">PNG, PDF, ZIP o una hoja unificada con todas las etiquetas.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CASOS DE USO -->
+  <section class="w-full px-margin-sm sm:px-margin py-space-xl relative z-10" id="casos">
+    <div class="max-w-7xl mx-auto">
+      <div class="mb-space-xl">
+        <span class="font-label-sm text-label-sm text-primary uppercase">Aplicaciones en campo</span>
+        <h2 class="font-headline-md text-headline-md sm:font-headline-lg sm:text-headline-lg text-on-surface tracking-tight mt-1">Para cualquier lugar que necesite un punto de control.</h2>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter">
+        <div class="bg-surface-container rounded-xl shadow-sm p-space-md">
+          <span class="material-symbols-outlined text-primary text-[36px]">route</span>
+          <span class="block font-label-sm text-label-sm text-primary uppercase mt-space-sm">Seguridad</span>
+          <h4 class="font-headline-sm text-headline-sm text-on-surface mt-1 mb-space-xs">Rondines de vigilancia</h4>
+          <p class="font-body-sm text-body-sm text-secondary">Un QR en cada punto del recorrido, enlazado a tu formulario de registro.</p>
+        </div>
+        <div class="bg-surface-container rounded-xl shadow-sm p-space-md">
+          <span class="material-symbols-outlined text-primary text-[36px]">build</span>
+          <span class="block font-label-sm text-label-sm text-primary uppercase mt-space-sm">Mantenimiento</span>
+          <h4 class="font-headline-sm text-headline-sm text-on-surface mt-1 mb-space-xs">Equipos y maquinaria</h4>
+          <p class="font-body-sm text-body-sm text-secondary">Acceso rápido a fichas técnicas, manuales y bitácoras de inspección.</p>
+        </div>
+        <div class="bg-surface-container rounded-xl shadow-sm p-space-md">
+          <span class="material-symbols-outlined text-primary text-[36px]">inventory_2</span>
+          <span class="block font-label-sm text-label-sm text-primary uppercase mt-space-sm">Logística</span>
+          <h4 class="font-headline-sm text-headline-sm text-on-surface mt-1 mb-space-xs">Almacén e inventario</h4>
+          <p class="font-body-sm text-body-sm text-secondary">Etiquetas para estantes, zonas y áreas de carga.</p>
+        </div>
+        <div class="bg-surface-container rounded-xl shadow-sm p-space-md">
+          <span class="material-symbols-outlined text-primary text-[36px]">description</span>
+          <span class="block font-label-sm text-label-sm text-primary uppercase mt-space-sm">Documentos</span>
+          <h4 class="font-headline-sm text-headline-sm text-on-surface mt-1 mb-space-xs">Certificados y reportes</h4>
+          <p class="font-body-sm text-body-sm text-secondary">Enlaza documentos en línea desde cualquier papel impreso.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+</main>
+
+<footer class="w-full bg-surface-container-low text-on-surface py-space-xl">
+  <div class="w-full px-margin-sm sm:px-margin">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-gutter mb-space-xl">
+      <div class="space-y-space-sm">
+        <div class="flex items-center gap-space-sm mb-space-xs">
+          <span class="material-symbols-outlined text-primary text-[24px]">qr_code_2</span>
+          <span class="font-headline-sm text-headline-sm text-primary uppercase">MisQR</span>
+        </div>
+        <p class="font-body-sm text-body-sm text-on-surface-variant max-w-xs">Códigos QR permanentes para puntos de control.</p>
+      </div>
+      <div>
+        <h4 class="font-label-md text-label-md uppercase text-on-surface mb-space-sm">Producto</h4>
+        <ul class="space-y-space-xs font-body-sm text-body-sm">
+          <li><a class="text-on-surface-variant hover:text-on-surface transition-colors" href="#caracteristicas">Características</a></li>
+          <li><a class="text-on-surface-variant hover:text-on-surface transition-colors" href="#como-funciona">Cómo funciona</a></li>
+          <li><a class="text-on-surface-variant hover:text-on-surface transition-colors" href="#casos">Casos de uso</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="font-label-md text-label-md uppercase text-on-surface mb-space-sm">Cuenta</h4>
+        <ul class="space-y-space-xs font-body-sm text-body-sm">
+          <li><a class="text-on-surface-variant hover:text-on-surface transition-colors" href="/login.html">Iniciar sesión</a></li>
+          <li><a class="text-on-surface-variant hover:text-on-surface transition-colors" href="/solicitar.html">Solicitar cuenta</a></li>
+          <li><a class="text-on-surface-variant hover:text-on-surface transition-colors" href="/recuperar.html">Recuperar contraseña</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="pt-space-lg font-label-sm text-label-sm text-on-surface-variant">
+      <p>© <span id="year">2026</span> MisQR</p>
+    </div>
+  </div>
+</footer>
+
+<script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+</body>
+</html>

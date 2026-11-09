@@ -320,6 +320,30 @@
   .userbar a:hover, .userbar button:hover{ color:var(--stamp); }
   #pwPanel{ display:none; }
   #pwPanel.open{ display:block; }
+
+  .select-box{
+    position:absolute; top:10px; left:10px; width:18px; height:18px;
+    accent-color: var(--stamp); cursor:pointer; margin:0;
+  }
+  .card.selected{ outline:2px solid var(--stamp); outline-offset:-1px; }
+  .merge-bar{
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
+    padding:12px 14px; margin-bottom:18px;
+    font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--ink-muted);
+  }
+  .merge-bar b{ color:var(--ink); }
+  .merge-bar .spacer{ flex:1; }
+  select{
+    font-family:'Inter',sans-serif; font-size:13px; padding:8px 10px;
+    border:1px solid var(--border); border-radius:var(--radius); background:#fff; color:var(--ink);
+  }
+  .merge-opts{
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:10px;
+    font-size:13px; color:var(--ink-muted);
+  }
+  .merge-opts label{ display:inline-flex; align-items:center; gap:6px; cursor:pointer; }
+  .merge-opts input[type="checkbox"]{ accent-color: var(--stamp); width:16px; height:16px; }
 </style>
 </head>
 <body>
@@ -364,6 +388,13 @@
     <div class="bulk-panel" id="bulkPanel">
       <p class="bulk-hint">Un checkpoint por línea. Formato libre: solo el enlace, o "Etiqueta, https://enlace".</p>
       <textarea id="bulkText" placeholder="Entrada principal, https://ejemplo.com/cp1&#10;https://ejemplo.com/cp2"></textarea>
+      <div class="merge-opts">
+        <label><input type="checkbox" id="bulkMerge"> Unificar los nuevos QR en un solo archivo</label>
+        <select id="bulkMergeFormat" aria-label="Formato del archivo unificado">
+          <option value="pdf">PDF</option>
+          <option value="png">PNG</option>
+        </select>
+      </div>
       <div style="margin-top:10px;">
         <button class="primary-btn" id="bulkAddBtn">Agregar lista</button>
       </div>
@@ -374,6 +405,19 @@
     <span id="countLabel"></span>
     <button class="ghost-btn" id="downloadAllBtn">Descargar todo (.zip)</button>
     <button class="ghost-btn" id="clearAllBtn">Vaciar lista</button>
+  </div>
+
+  <div class="merge-bar" id="mergeBar" style="display:none;">
+    <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;">
+      <input type="checkbox" id="selectAll" style="accent-color:var(--stamp);width:16px;height:16px;"> Seleccionar todo
+    </label>
+    <span><b id="selCount">0</b> seleccionados</span>
+    <span class="spacer"></span>
+    <select id="mergeFormat" aria-label="Formato del archivo unificado">
+      <option value="pdf">PDF</option>
+      <option value="png">PNG</option>
+    </select>
+    <button class="primary-btn" id="mergeBtn" style="padding:9px 14px;font-size:13px;" disabled>Unificar seleccionados</button>
   </div>
 
   <div class="grid" id="grid"></div>
@@ -454,43 +498,25 @@
     }
   }
 
-  async function downloadSingleQR(id) {
-    try {
-      const res = await apiFetch(`${API_BASE}/qr/${id}/download`);
-      if (!res.ok) throw new Error('Error');
-      const blob = await res.blob();
-      const checkpoint = checkpoints.find(c => c.id === id);
-      const filename = sanitizeFilename(checkpoint.code + '_' + checkpoint.name) + '.png';
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      showMessage('error', 'Error al descargar QR: ' + err.message);
-    }
+  function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   }
 
-  async function downloadSinglePDF(id) {
+  async function downloadSingle(id, kind) {
     try {
-      const res = await apiFetch(`${API_BASE}/qr/${id}/download-pdf`);
+      const res = await apiFetch(`${API_BASE}/qr/${id}/${kind === 'pdf' ? 'download-pdf' : 'download'}`);
       if (!res.ok) throw new Error('Error');
-      const blob = await res.blob();
       const checkpoint = checkpoints.find(c => c.id === id);
-      const filename = sanitizeFilename(checkpoint.code + '_' + checkpoint.name) + '.pdf';
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      downloadBlob(await res.blob(), sanitizeFilename(checkpoint.code + '_' + checkpoint.name) + '.' + kind);
     } catch (err) {
-      showMessage('error', 'Error al descargar PDF: ' + err.message);
+      showMessage('error', 'Error al descargar ' + kind.toUpperCase() + ': ' + err.message);
     }
   }
 
@@ -501,21 +527,109 @@
       for (const cp of checkpoints) {
         const res = await apiFetch(`${API_BASE}/qr/${cp.id}/download`);
         if (!res.ok) continue;
-        const blob = await res.blob();
-        const filename = sanitizeFilename(cp.code + '_' + cp.name) + '.png';
-        zip.file(filename, blob);
+        zip.file(sanitizeFilename(cp.code + '_' + cp.name) + '.png', await res.blob());
       }
-      const blob = await zip.generateAsync({ type: 'blob' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'puntos-de-control-qr.zip';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      downloadBlob(await zip.generateAsync({ type: 'blob' }), 'puntos-de-control-qr.zip');
     } catch (err) {
       showMessage('error', 'Error al descargar ZIP: ' + err.message);
+    }
+  }
+
+  // ---------- Unificar varios QR en un solo archivo ----------
+  const MERGE_MAX = 100;
+  const selected = new Set();
+
+  function updateSelectionUI() {
+    for (const id of [...selected]) if (!checkpoints.some(c => c.id === id)) selected.delete(id);
+    document.getElementById('selCount').textContent = selected.size;
+    document.getElementById('mergeBtn').disabled = selected.size < 2;
+    const all = document.getElementById('selectAll');
+    all.checked = checkpoints.length > 0 && selected.size === checkpoints.length;
+    all.indeterminate = selected.size > 0 && selected.size < checkpoints.length;
+    document.querySelectorAll('.select-box').forEach(box => {
+      const on = selected.has(parseInt(box.dataset.id));
+      box.checked = on;
+      box.closest('.card').classList.toggle('selected', on);
+    });
+  }
+
+  function fitText(ctx, text, maxWidth) {
+    if (ctx.measureText(text).width <= maxWidth) return text;
+    let t = text;
+    while (t.length && ctx.measureText(t + '…').width > maxWidth) t = t.slice(0, -1);
+    return t + '…';
+  }
+
+  async function buildMergedPng(items) {
+    await document.fonts.ready;
+    const QR = 300, PAD = 30, GAP = 20, LABEL = 58;
+    const cellW = QR + 40, cellH = LABEL + QR + 24;
+    const cols = Math.min(3, items.length);
+    const rows = Math.ceil(items.length / cols);
+    const canvas = document.createElement('canvas');
+    canvas.width = PAD * 2 + cols * cellW + (cols - 1) * GAP;
+    canvas.height = PAD * 2 + rows * cellH + (rows - 1) * GAP;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    for (let i = 0; i < items.length; i++) {
+      const cp = items[i];
+      const res = await apiFetch(`${API_BASE}/qr/${cp.id}/download`);
+      if (!res.ok) throw new Error('No se pudo obtener el QR ' + cp.code);
+      const img = await createImageBitmap(await res.blob());
+      const x = PAD + (i % cols) * (cellW + GAP);
+      const y = PAD + Math.floor(i / cols) * (cellH + GAP);
+
+      ctx.save();
+      ctx.strokeStyle = '#D8CFB8';
+      ctx.setLineDash([6, 5]);
+      ctx.strokeRect(x + 0.5, y + 0.5, cellW - 1, cellH - 1);
+      ctx.restore();
+
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillStyle = '#B23A2E';
+      ctx.font = '700 15px "JetBrains Mono", monospace';
+      ctx.fillText(cp.code, x + cellW / 2, y + 12);
+      ctx.fillStyle = '#20262E';
+      ctx.font = '600 18px Inter, sans-serif';
+      ctx.fillText(fitText(ctx, cp.name, cellW - 24), x + cellW / 2, y + 32);
+
+      ctx.drawImage(img, x + (cellW - QR) / 2, y + LABEL, QR, QR);
+    }
+    return new Promise((resolve, reject) =>
+      canvas.toBlob(b => b ? resolve(b) : reject(new Error('No se pudo generar la imagen')), 'image/png'));
+  }
+
+  async function mergeQRs(ids, format) {
+    const items = ids.map(id => checkpoints.find(c => c.id === id)).filter(Boolean).sort((a, b) => a.id - b.id);
+    if (items.length < 2) return showMessage('error', 'Selecciona al menos 2 QR para unificar.');
+    if (items.length > MERGE_MAX) return showMessage('error', `Máximo ${MERGE_MAX} QR por archivo.`);
+    const btn = document.getElementById('mergeBtn');
+    btn.disabled = true;
+    btn.textContent = 'Generando…';
+    try {
+      if (format === 'png') {
+        downloadBlob(await buildMergedPng(items), 'qr-unificados.png');
+      } else {
+        const res = await apiFetch(`${API_BASE}/qr/merge`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids: items.map(c => c.id) })
+        });
+        if (!res.ok) {
+          const e = await res.json().catch(() => ({}));
+          throw new Error(e.error || 'Error en servidor');
+        }
+        downloadBlob(await res.blob(), 'qr-unificados.pdf');
+      }
+      showMessage('success', `${items.length} QR unificados en ${format.toUpperCase()}.`);
+    } catch (err) {
+      showMessage('error', 'Error al unificar: ' + err.message);
+    } finally {
+      btn.textContent = 'Unificar seleccionados';
+      updateSelectionUI();
     }
   }
 
@@ -531,6 +645,7 @@
       const card = document.createElement('div');
       card.className = 'card';
       card.innerHTML =
+        '<input type="checkbox" class="select-box" data-id="' + cp.id + '" aria-label="Seleccionar ' + escapeHtml(cp.code) + '">' +
         '<div class="stamp">' + cp.code + '</div>' +
         '<div class="qr-box" id="qrbox-' + cp.id + '"><div class="qr-loading">Generando QR...</div></div>' +
         '<div class="card-name">' + escapeHtml(cp.name) + '</div>' +
@@ -543,37 +658,52 @@
           '<button class="del-btn" data-id="' + cp.id + '">Eliminar</button>' +
         '</div>';
       grid.appendChild(card);
-
-      // Cargar QR
-      try {
-        const res = await apiFetch(`${API_BASE}/qr/${cp.id}`);
-        const data = await res.json();
-        const qrbox = document.getElementById('qrbox-' + cp.id);
-        const img = document.createElement('img');
-        img.src = data.qr;
-        qrbox.innerHTML = '';
-        qrbox.appendChild(img);
-      } catch (err) {
-        const qrbox = document.getElementById('qrbox-' + cp.id);
-        qrbox.innerHTML = '<div style="color:var(--stamp);">Error al generar QR</div>';
-      }
     }
 
     document.getElementById('emptyState').style.display = checkpoints.length ? 'none' : 'block';
     document.getElementById('actionsRow').style.display = checkpoints.length ? 'flex' : 'none';
+    document.getElementById('mergeBar').style.display = checkpoints.length > 1 ? 'flex' : 'none';
     document.getElementById('countLabel').textContent =
       checkpoints.length + (checkpoints.length === 1 ? ' punto de control' : ' puntos de control');
+    updateSelectionUI();
 
-    grid.querySelectorAll('.dl-btn').forEach(btn => {
-      btn.addEventListener('click', () => downloadSingleQR(parseInt(btn.dataset.id)));
-    });
-    grid.querySelectorAll('.dl-btn-pdf').forEach(btn => {
-      btn.addEventListener('click', () => downloadSinglePDF(parseInt(btn.dataset.id)));
-    });
-    grid.querySelectorAll('.del-btn').forEach(btn => {
-      btn.addEventListener('click', () => deleteCheckpoint(parseInt(btn.dataset.id)));
-    });
+    for (const cp of checkpoints) {
+      const qrbox = document.getElementById('qrbox-' + cp.id);
+      if (!qrbox || qrbox.querySelector('img')) continue;
+      try {
+        const res = await apiFetch(`${API_BASE}/qr/${cp.id}`);
+        const data = await res.json();
+        const img = document.createElement('img');
+        img.src = data.qr;
+        img.alt = 'QR ' + cp.code;
+        qrbox.innerHTML = '';
+        qrbox.appendChild(img);
+      } catch (err) {
+        qrbox.innerHTML = '<div style="color:var(--stamp);">Error al generar QR</div>';
+      }
+    }
   }
+
+  document.getElementById('grid').addEventListener('click', (e) => {
+    const el = e.target.closest('button, .select-box');
+    if (!el) return;
+    const id = parseInt(el.dataset.id);
+    if (el.classList.contains('select-box')) {
+      el.checked ? selected.add(id) : selected.delete(id);
+      updateSelectionUI();
+    } else if (el.classList.contains('dl-btn')) downloadSingle(id, 'png');
+    else if (el.classList.contains('dl-btn-pdf')) downloadSingle(id, 'pdf');
+    else if (el.classList.contains('del-btn')) deleteCheckpoint(id);
+  });
+
+  document.getElementById('selectAll').addEventListener('change', (e) => {
+    selected.clear();
+    if (e.target.checked) checkpoints.forEach(c => selected.add(c.id));
+    updateSelectionUI();
+  });
+
+  document.getElementById('mergeBtn').addEventListener('click', () =>
+    mergeQRs([...selected], document.getElementById('mergeFormat').value));
 
   // Event listeners
   document.getElementById('addBtn').addEventListener('click', async () => {
@@ -594,22 +724,41 @@
   });
 
   document.getElementById('bulkAddBtn').addEventListener('click', async () => {
-    const lines = document.getElementById('bulkText').value.split('\n');
-    let added = 0;
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed) continue;
-      const idx = trimmed.indexOf(',');
-      let name = '', url = trimmed;
-      if (idx > -1) {
-        name = trimmed.slice(0, idx);
-        url = trimmed.slice(idx + 1);
+    const lines = document.getElementById('bulkText').value.split('\n').map(l => l.trim()).filter(Boolean);
+    if (!lines.length) return showMessage('error', 'Escribe al menos un enlace.');
+    const btn = document.getElementById('bulkAddBtn');
+    btn.disabled = true;
+    try {
+      const res = await apiFetch(`${API_BASE}/checkpoints/bulk`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: lines })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Error en servidor');
+
+      const items = data.items || [];
+      checkpoints = [...items.slice().reverse(), ...checkpoints];
+      const skipped = lines.length - items.length;
+      showMessage(items.length ? 'success' : 'error',
+        `${items.length} checkpoint(s) agregados` + (skipped ? `, ${skipped} línea(s) inválidas omitidas.` : '.'));
+      if (items.length) {
+        document.getElementById('bulkText').value = '';
+        document.getElementById('bulkPanel').classList.remove('open');
       }
-      if (await addCheckpoint(name, url)) added++;
-    }
-    if (added) {
-      document.getElementById('bulkText').value = '';
-      document.getElementById('bulkPanel').classList.remove('open');
+      renderGrid();
+
+      if (document.getElementById('bulkMerge').checked) {
+        if (items.length >= 2) {
+          await mergeQRs(items.map(c => c.id), document.getElementById('bulkMergeFormat').value);
+        } else if (items.length) {
+          showMessage('error', 'Se necesitan al menos 2 QR nuevos para unificar.');
+        }
+      }
+    } catch (err) {
+      showMessage('error', 'Error al agregar: ' + err.message);
+    } finally {
+      btn.disabled = false;
     }
   });
 
@@ -627,7 +776,12 @@
     try {
       const me = await (await apiFetch(`${API_BASE}/me`)).json();
       document.getElementById('meName').textContent = me.username;
-      if (me.isAdmin) document.getElementById('adminLink').style.display = 'inline';
+      if (me.isAdmin) {
+        const link = document.getElementById('adminLink');
+        link.style.display = 'inline';
+        const reqs = await (await apiFetch(`${API_BASE}/admin/requests`)).json();
+        if (Array.isArray(reqs) && reqs.length) link.textContent += ` (${reqs.length} solicitud${reqs.length > 1 ? 'es' : ''})`;
+      }
     } catch (e) {}
   })();
 

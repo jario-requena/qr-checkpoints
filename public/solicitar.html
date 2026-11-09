@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solicitar cuenta · MisQR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400..700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="/theme.js"></script>
+<style>.material-symbols-outlined{ font-size:inherit; line-height:1; }</style>
+</head>
+<body class="bg-surface font-body-md text-body-md text-on-surface antialiased min-h-screen flex flex-col">
+<div class="fixed inset-0 pointer-events-none opacity-40 bg-[radial-gradient(#8c716e_0.75px,transparent_0.75px)] [background-size:24px_24px]"></div>
+
+<header class="relative z-10 h-20 px-margin-sm sm:px-margin flex items-center">
+  <a href="/" class="flex items-center gap-space-sm">
+    <span class="material-symbols-outlined text-primary text-[28px]">qr_code_2</span>
+    <span class="font-headline-sm text-headline-sm text-primary uppercase">MisQR</span>
+  </a>
+</header>
+
+<main class="relative z-10 flex-1 flex items-center justify-center px-margin-sm py-space-xl">
+  <div class="w-full max-w-lg bg-surface-container p-space-lg rounded-xl shadow-lg relative overflow-hidden">
+    <div class="absolute inset-0 pointer-events-none opacity-20 bg-[radial-gradient(#8c716e_0.5px,transparent_0.5px)] [background-size:16px_16px]"></div>
+    <div class="relative z-10">
+      <div class="text-center mb-space-md">
+        <span class="font-label-sm text-label-sm text-primary uppercase tracking-widest font-bold">Generador QR · Bitácora de control</span>
+        <h1 class="font-headline-md text-headline-md text-on-surface mt-1 mb-space-xs">Solicitar cuenta</h1>
+        <p class="font-body-sm text-body-sm text-secondary">El administrador revisará tu solicitud y te enviará tu acceso por correo.</p>
+      </div>
+
+      <form class="space-y-space-md" id="form">
+        <div>
+          <label for="name" class="block font-label-sm text-label-sm uppercase text-on-surface mb-1">Nombre</label>
+          <input id="name" class="w-full h-11 px-space-md bg-surface font-body-md text-body-md text-on-surface rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-container transition-all" required maxlength="120" type="text" autocomplete="name" autofocus>
+        </div>
+        <div>
+          <label for="email" class="block font-label-sm text-label-sm uppercase text-on-surface mb-1">Correo electrónico</label>
+          <input id="email" class="w-full h-11 px-space-md bg-surface font-body-md text-body-md text-on-surface rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-container transition-all" required maxlength="200" type="email" autocomplete="email" placeholder="tu@correo.com">
+        </div>
+        <div>
+          <label for="username" class="block font-label-sm text-label-sm uppercase text-on-surface mb-1">Usuario deseado <span class="text-secondary normal-case tracking-normal font-normal">(opcional)</span></label>
+          <input id="username" class="w-full h-11 px-space-md bg-surface font-body-md text-body-md text-on-surface rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-container transition-all" maxlength="32" pattern="[a-zA-Z0-9._\-]{3,32}" type="text" autocapitalize="none" autocomplete="off" placeholder="ej: maria.lopez">
+        </div>
+        <div>
+          <label for="message" class="block font-label-sm text-label-sm uppercase text-on-surface mb-1">Mensaje <span class="text-secondary normal-case tracking-normal font-normal">(opcional)</span></label>
+          <textarea id="message" rows="3" maxlength="1000" class="w-full px-space-md py-space-sm bg-surface font-body-md text-body-md text-on-surface rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-container transition-all" placeholder="¿Para qué usarás los QR?"></textarea>
+        </div>
+        <div class="hidden" aria-hidden="true">
+          <label for="website">Sitio web</label>
+          <input id="website" type="text" tabindex="-1" autocomplete="off">
+        </div>
+        <button class="w-full h-12 bg-primary hover:bg-primary-container text-on-primary font-label-md text-label-md uppercase rounded-lg shadow-sm transition-all hover:shadow-md flex items-center justify-center gap-space-xs font-bold disabled:opacity-50" type="submit">
+          <span>Enviar solicitud</span>
+          <span class="material-symbols-outlined text-[18px]">send</span>
+        </button>
+      </form>
+
+      <div class="hidden mt-space-sm p-space-sm rounded-lg text-center font-mono-data text-xs font-bold" id="msg" role="alert"></div>
+      <div class="text-center mt-space-lg font-body-sm text-body-sm text-secondary">
+        ¿Ya tienes cuenta? <a class="text-primary font-bold hover:underline" href="/login.html">Inicia sesión</a>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  function showMsg(text, ok) {
+    const m = $('msg');
+    m.textContent = text;
+    m.className = 'mt-space-sm p-space-sm rounded-lg text-center font-mono-data text-xs font-bold ' +
+      (ok ? 'bg-green-700/10 text-green-800' : 'bg-primary/10 text-primary');
+  }
+
+  $('form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = $('form').querySelector('button[type="submit"]');
+    btn.disabled = true;
+    try {
+      const res = await fetch('/api/account-requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: $('name').value.trim(),
+          email: $('email').value.trim(),
+          username: $('username').value.trim(),
+          message: $('message').value.trim(),
+          website: $('website').value
+        })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'No se pudo enviar la solicitud');
+      $('form').classList.add('hidden');
+      showMsg('Solicitud enviada. Te contactaremos por correo cuando tu cuenta esté lista.', true);
+      return;
+    } catch (ex) { showMsg(ex.message, false); }
+    btn.disabled = false;
+  });
+</script>
+</body>
+</html>

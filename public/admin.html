@@ -47,6 +47,15 @@
   td.actions button{ margin-left:6px; padding:7px 10px; font-size:12px; }
   .tag{ font-family:'JetBrains Mono',monospace; font-size:10.5px; font-weight:700; color:var(--stamp); border:1.5px dashed var(--stamp); border-radius:999px; padding:2px 8px; margin-left:8px; }
   .scroll{ overflow-x:auto; }
+  .muted{ color:var(--ink-muted); font-style:italic; }
+  .count{ background:var(--stamp); color:#fff; border-radius:999px; padding:1px 8px; font-size:11px; margin-left:6px; }
+  .req{ border-top:1px solid var(--border); padding:12px 0; display:flex; gap:12px; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; }
+  .req:first-child{ border-top:none; padding-top:0; }
+  .req-info{ font-size:13.5px; line-height:1.55; flex:1 1 260px; word-break:break-word; }
+  .req-info .meta{ font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--ink-muted); }
+  .req-info .note{ background:#fff; border:1px solid var(--border); border-radius:var(--radius); padding:6px 10px; margin-top:6px; font-size:13px; }
+  .req-actions{ display:flex; gap:6px; }
+  .req-actions button{ padding:7px 10px; font-size:12px; }
 </style>
 </head>
 <body>
@@ -56,23 +65,33 @@
   <h1>Usuarios</h1>
   <p class="sub">Solo tú puedes crear cuentas. Cada usuario ve únicamente sus propios QR.</p>
 
-  <div class="panel">
+  <div class="panel" id="reqPanel" style="display:none;">
+    <h2>Solicitudes pendientes <span class="count" id="reqCount"></span></h2>
+    <div id="reqList"></div>
+    <div class="msg" id="reqMsg"></div>
+  </div>
+
+  <div class="panel" id="createPanel">
     <h2>Crear usuario</h2>
     <div class="row">
       <input id="newUser" type="text" placeholder="Usuario (ej: maria)" autocapitalize="none" autocomplete="off">
+      <input id="newEmail" type="email" placeholder="Correo electrónico" autocapitalize="none" autocomplete="off">
+    </div>
+    <div class="row" style="margin-top:10px;">
       <input id="newPass" type="text" placeholder="Contraseña (mín. 8)" autocomplete="off">
       <button class="ghost" id="genBtn" type="button">Generar</button>
       <button class="primary" id="createBtn" type="button">Crear</button>
     </div>
     <div class="msg" id="createMsg"></div>
-    <p class="hint">Copia el usuario y la contraseña y envíaselos a la persona. La contraseña no se puede volver a ver, solo cambiar.</p>
+    <p class="hint" id="fromRequest" style="display:none;"></p>
+    <p class="hint">Copia el usuario y la contraseña y envíaselos a la persona. La contraseña no se puede volver a ver, solo cambiar. El correo se usa para recuperar la contraseña y para avisarle si la cambias.</p>
   </div>
 
   <div class="panel">
     <h2>Cuentas</h2>
     <div class="scroll">
       <table>
-        <thead><tr><th>Usuario</th><th>QR</th><th>Creado</th><th></th></tr></thead>
+        <thead><tr><th>Usuario</th><th>Correo</th><th>QR</th><th>Creado</th><th></th></tr></thead>
         <tbody id="rows"></tbody>
       </table>
     </div>
@@ -95,15 +114,69 @@
 
   function setMsg(el, text, ok) { el.textContent = text; el.className = 'msg ' + (ok ? 'ok' : 'err'); }
 
+  let requestId = null;
+  let requests = [];
+
+  async function loadRequests() {
+    try {
+      requests = await api('/api/admin/requests');
+      $('reqPanel').style.display = requests.length ? 'block' : 'none';
+      $('reqCount').textContent = requests.length;
+      $('reqList').innerHTML = requests.map(r =>
+        '<div class="req">' +
+          '<div class="req-info">' +
+            '<b>' + esc(r.name) + '</b> · ' + esc(r.email) +
+            '<div class="meta">Usuario deseado: ' + esc(r.username || '—') + ' · ' + esc((r.created_at || '').slice(0, 16)) + '</div>' +
+            (r.message ? '<div class="note">' + esc(r.message) + '</div>' : '') +
+          '</div>' +
+          '<div class="req-actions">' +
+            '<button class="primary" data-approve="' + r.id + '">Crear cuenta</button>' +
+            '<button class="danger" data-reject="' + r.id + '">Rechazar</button>' +
+          '</div>' +
+        '</div>').join('');
+    } catch (e) { setMsg($('reqMsg'), e.message, false); }
+  }
+
+  function clearRequest() {
+    requestId = null;
+    $('fromRequest').style.display = 'none';
+  }
+
+  $('reqList').addEventListener('click', async (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    if (b.dataset.approve) {
+      const r = requests.find(x => x.id === Number(b.dataset.approve));
+      if (!r) return;
+      requestId = r.id;
+      $('newUser').value = r.username || r.email.split('@')[0].replace(/[^a-zA-Z0-9._-]/g, '').slice(0, 32);
+      $('newEmail').value = r.email;
+      $('genBtn').click();
+      $('fromRequest').textContent = 'Creando cuenta para la solicitud de ' + r.name + '.';
+      $('fromRequest').style.display = 'block';
+      $('createPanel').scrollIntoView({ behavior: 'smooth' });
+      $('newUser').focus();
+    } else if (b.dataset.reject) {
+      if (!confirm('¿Rechazar esta solicitud?')) return;
+      try {
+        await api('/api/admin/requests/' + b.dataset.reject, { method: 'DELETE' });
+        if (requestId === Number(b.dataset.reject)) clearRequest();
+        loadRequests();
+      } catch (ex) { setMsg($('reqMsg'), ex.message, false); }
+    }
+  });
+
   async function load() {
     try {
       const users = await api('/api/admin/users');
       $('rows').innerHTML = users.map(u =>
         '<tr>' +
           '<td>' + esc(u.username) + (u.isAdmin ? '<span class="tag">ADMIN</span>' : '') + '</td>' +
+          '<td>' + (u.email ? esc(u.email) : '<span class="muted">sin correo</span>') + '</td>' +
           '<td>' + u.checkpoints + '</td>' +
           '<td>' + esc((u.created_at || '').slice(0, 10)) + '</td>' +
           '<td class="actions">' +
+            '<button class="ghost" data-email="' + u.id + '" data-name="' + esc(u.username) + '" data-current="' + esc(u.email) + '">Editar correo</button>' +
             '<button class="ghost" data-pw="' + u.id + '" data-name="' + esc(u.username) + '">Cambiar contraseña</button>' +
             (u.isAdmin ? '' : '<button class="danger" data-del="' + u.id + '" data-name="' + esc(u.username) + '" data-n="' + u.checkpoints + '">Eliminar</button>') +
           '</td>' +
@@ -120,11 +193,13 @@
 
   $('createBtn').addEventListener('click', async () => {
     const username = $('newUser').value.trim();
+    const email = $('newEmail').value.trim();
     const password = $('newPass').value;
     try {
-      await post('/api/admin/users', { username, password });
-      setMsg($('createMsg'), 'Creado → usuario: ' + username + '   contraseña: ' + password, true);
-      $('newUser').value = ''; $('newPass').value = '';
+      await post('/api/admin/users', { username, email, password, requestId });
+      setMsg($('createMsg'), 'Creado → usuario: ' + username + '   correo: ' + email + '   contraseña: ' + password, true);
+      $('newUser').value = ''; $('newEmail').value = ''; $('newPass').value = '';
+      if (requestId) { clearRequest(); loadRequests(); }
       load();
     } catch (e) { setMsg($('createMsg'), e.message, false); }
   });
@@ -136,8 +211,17 @@
       if (b.dataset.pw) {
         const pw = prompt('Nueva contraseña para "' + b.dataset.name + '" (mínimo 8 caracteres):');
         if (!pw) return;
-        await post('/api/admin/users/' + b.dataset.pw + '/password', { password: pw });
-        setMsg($('listMsg'), 'Contraseña de "' + b.dataset.name + '" actualizada. Sus sesiones abiertas se cerraron.', true);
+        const r = await post('/api/admin/users/' + b.dataset.pw + '/password', { password: pw });
+        const mail = r.emailed ? ' Se le envió la nueva contraseña a ' + r.email + '.'
+          : r.email ? ' No se pudo enviar el correo a ' + r.email + '.'
+          : ' El usuario no tiene correo registrado; no se le notificó.';
+        setMsg($('listMsg'), 'Contraseña de "' + b.dataset.name + '" actualizada. Sus sesiones abiertas se cerraron.' + mail, r.emailed || !r.email);
+      } else if (b.dataset.email) {
+        const email = prompt('Correo de "' + b.dataset.name + '" (vacío para quitarlo):', b.dataset.current || '');
+        if (email === null) return;
+        await post('/api/admin/users/' + b.dataset.email + '/email', { email: email.trim() });
+        setMsg($('listMsg'), 'Correo de "' + b.dataset.name + '" actualizado.', true);
+        load();
       } else if (b.dataset.del) {
         if (!confirm('¿Eliminar a "' + b.dataset.name + '" y sus ' + b.dataset.n + ' QR? No se puede deshacer.')) return;
         await api('/api/admin/users/' + b.dataset.del, { method: 'DELETE' });
@@ -147,6 +231,7 @@
   });
 
   load();
+  loadRequests();
 </script>
 </body>
 </html>

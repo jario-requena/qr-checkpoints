@@ -16,3 +16,11 @@ services:
         sync: false
       - key: AUTH_PASS
         sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: MAIL_FROM
+        value: MisQR <no-reply@misqr.online>
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: APP_URL
+        value: https://misqr.online
