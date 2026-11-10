@@ -198,8 +198,9 @@ app.post('/api/password/forgot', wrap(async (req, res) => {
     return res.status(429).json({ error: 'Demasiadas solicitudes. Espera unos minutos e inténtalo de nuevo.' });
   }
   const user = await findUserByIdentifier(identifier);
-  if (user && user.email) {
-    const code = String(crypto.randomInt(0, 1e6)).padStart(6, '0');
+  if (!user) return res.status(404).json({ error: 'No encontramos una cuenta con ese usuario' });
+  if (!user.email) return res.status(400).json({ error: 'Esa cuenta no tiene correo registrado. Pídele al administrador que lo agregue.' });
+  const code = String(crypto.randomInt(0, 1e6)).padStart(6, '0');
     await db.execute({
       sql: `INSERT INTO password_resets (user_id, code_hash, expires_at, attempts) VALUES (?, ?, ?, 0)
             ON CONFLICT(user_id) DO UPDATE SET code_hash = excluded.code_hash, expires_at = excluded.expires_at, attempts = 0`,
@@ -214,10 +215,8 @@ app.post('/api/password/forgot', wrap(async (req, res) => {
         <div style="font-family:'Courier New',monospace;font-size:32px;font-weight:bold;letter-spacing:.3em;color:#871919;background:#fff;border-radius:6px;padding:14px;text-align:center;">${code}</div>
         <p style="font-size:13px;color:#605e5a;">Vence en 15 minutos. Si no lo pediste, ignora este correo.</p>
         <p><a href="${APP_URL}/recuperar.html" style="color:#871919;">Ir a restablecer contraseña</a></p>`)
-    });
-  }
-  // Respuesta idéntica exista o no la cuenta
-  res.json({ ok: true });
+  });
+  res.json({ ok: true, email: user.email });
 }));
 
 app.post('/api/password/reset', wrap(async (req, res) => {

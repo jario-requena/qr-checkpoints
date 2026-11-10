@@ -37,8 +37,15 @@
   .primary{ background:var(--stamp); color:#fff; white-space:nowrap; }
   .ghost{ background:transparent; border-color:var(--border); color:var(--ink); }
   .danger{ background:transparent; border-color:var(--border); color:var(--stamp); }
-  .msg{ font-family:'JetBrains Mono',monospace; font-size:12.5px; margin-top:10px; min-height:1em; word-break:break-all; }
-  .msg.err{ color:var(--stamp); } .msg.ok{ color:#2d5016; }
+  .toast{
+    position:fixed; top:16px; left:50%; transform:translateX(-50%); z-index:50;
+    max-width:min(560px, calc(100% - 32px)); padding:12px 16px; border-radius:var(--radius);
+    font-family:'JetBrains Mono',monospace; font-size:12.5px; line-height:1.45; word-break:break-word;
+    background:var(--card); border:1px solid var(--border); box-shadow:0 8px 24px rgba(32,38,46,.14);
+    display:none;
+  }
+  .toast.ok{ color:#2d5016; border-color:#2d5016; }
+  .toast.err{ color:var(--stamp); border-color:var(--stamp); }
   .hint{ font-size:12px; color:var(--ink-muted); margin:10px 0 0; }
   table{ width:100%; border-collapse:collapse; font-size:13.5px; }
   th{ text-align:left; font-family:'JetBrains Mono',monospace; font-size:11.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-muted); padding:0 8px 10px; }
@@ -59,6 +66,7 @@
 </style>
 </head>
 <body>
+<div class="toast" id="toast" role="status"></div>
 <div class="app">
   <a class="back" href="/">← Volver a mis QR</a>
   <div class="eyebrow">Administración</div>
@@ -68,7 +76,6 @@
   <div class="panel" id="reqPanel" style="display:none;">
     <h2>Solicitudes pendientes <span class="count" id="reqCount"></span></h2>
     <div id="reqList"></div>
-    <div class="msg" id="reqMsg"></div>
   </div>
 
   <div class="panel" id="createPanel">
@@ -82,7 +89,6 @@
       <button class="ghost" id="genBtn" type="button">Generar</button>
       <button class="primary" id="createBtn" type="button">Crear</button>
     </div>
-    <div class="msg" id="createMsg"></div>
     <p class="hint" id="fromRequest" style="display:none;"></p>
     <p class="hint">Al crear la cuenta se envía un correo con el usuario y una contraseña temporal generada por el sistema. La contraseña no se puede volver a ver, solo cambiar.</p>
   </div>
@@ -95,7 +101,6 @@
         <tbody id="rows"></tbody>
       </table>
     </div>
-    <div class="msg" id="listMsg"></div>
   </div>
 </div>
 
@@ -112,7 +117,15 @@
   }
   const post = (url, body) => api(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
 
-  function setMsg(el, text, ok) { el.textContent = text; el.className = 'msg ' + (ok ? 'ok' : 'err'); }
+  let toastTimer;
+  function setMsg(_el, text, ok) {
+    const t = $('toast');
+    t.textContent = text;
+    t.className = 'toast ' + (ok ? 'ok' : 'err');
+    t.style.display = 'block';
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.style.display = 'none'; }, 4500);
+  }
 
   let requestId = null;
   let requests = [];
@@ -181,8 +194,7 @@
             (u.isAdmin ? '' : '<button class="danger" data-del="' + u.id + '" data-name="' + esc(u.username) + '" data-n="' + u.checkpoints + '">Eliminar</button>') +
           '</td>' +
         '</tr>').join('');
-      $('listMsg').textContent = '';
-    } catch (e) { setMsg($('listMsg'), e.message, false); }
+    } catch (e) { setMsg(null, e.message, false); }
   }
 
   $('genBtn').addEventListener('click', () => {

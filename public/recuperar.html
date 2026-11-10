@@ -91,11 +91,11 @@
   async function requestCode(btn) {
     btn.disabled = true;
     try {
-      await post('/api/password/forgot', { identifier: $('identifier').value.trim() });
+      const data = await post('/api/password/forgot', { identifier: $('identifier').value.trim() });
       $('step1').classList.add('hidden');
       $('step2').classList.remove('hidden');
-      $('intro').textContent = 'Si la cuenta existe y tiene correo registrado, te enviamos un código. Revisa también la carpeta de spam.';
-      showMsg('Código enviado. Vence en 15 minutos.', true);
+      $('intro').textContent = 'Enviamos el código a ' + data.email + '. Revisa también la carpeta de spam.';
+      showMsg('Código enviado a ' + data.email + '. Vence en 15 minutos.', true);
       $('code').focus();
     } catch (e) { showMsg(e.message, false); }
     btn.disabled = false;
