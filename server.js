@@ -368,7 +368,19 @@ app.post('/api/admin/users', requireAdmin, wrap(async (req, res) => {
     if (requestId) {
       await db.execute({ sql: "UPDATE account_requests SET status = 'approved' WHERE id = ?", args: [requestId] });
     }
-    res.json({ id: Number(r.lastInsertRowid), username, email });
+    const emailed = await sendMail({
+      to: email,
+      subject: 'Tu cuenta MisQR está lista',
+      text: `Hola ${username}, tu cuenta en MisQR ya está creada.\nLa contraseña es temporal y fue generada por el sistema.\nUsuario: ${username}\nContraseña temporal: ${password}\nInicia sesión en ${APP_URL}/login.html y cámbiala desde "Cambiar contraseña". Si la olvidas, usa "Recuperar contraseña".`,
+      html: layout('Tu cuenta está lista', `
+        <p>Hola <b>${escapeHtml(username)}</b>, tu cuenta en MisQR ya está creada.</p>
+        <p>La contraseña es <b>temporal y fue generada por el sistema</b>.</p>
+        <p style="background:#fff;border-radius:6px;padding:12px;font-family:'Courier New',monospace;">
+          Usuario: <b>${escapeHtml(username)}</b><br>Contraseña temporal: <b>${escapeHtml(password)}</b></p>
+        <p style="font-size:13px;color:#605e5a;">Inicia sesión y cámbiala desde "Cambiar contraseña". Si la olvidas, usa "Recuperar contraseña".</p>
+        <p><a href="${APP_URL}/login.html" style="color:#871919;font-weight:bold;">Iniciar sesión</a></p>`)
+    });
+    res.json({ id: Number(r.lastInsertRowid), username, email, emailed });
   } catch (e) {
     if (isUniqueError(e)) return res.status(409).json({ error: uniqueMessage(e) });
     throw e;

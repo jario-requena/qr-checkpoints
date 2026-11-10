@@ -84,7 +84,7 @@
     </div>
     <div class="msg" id="createMsg"></div>
     <p class="hint" id="fromRequest" style="display:none;"></p>
-    <p class="hint">Copia el usuario y la contraseña y envíaselos a la persona. La contraseña no se puede volver a ver, solo cambiar. El correo se usa para recuperar la contraseña y para avisarle si la cambias.</p>
+    <p class="hint">Al crear la cuenta se envía un correo con el usuario y una contraseña temporal generada por el sistema. La contraseña no se puede volver a ver, solo cambiar.</p>
   </div>
 
   <div class="panel">
@@ -196,8 +196,11 @@
     const email = $('newEmail').value.trim();
     const password = $('newPass').value;
     try {
-      await post('/api/admin/users', { username, email, password, requestId });
-      setMsg($('createMsg'), 'Creado → usuario: ' + username + '   correo: ' + email + '   contraseña: ' + password, true);
+      const created = await post('/api/admin/users', { username, email, password, requestId });
+      setMsg($('createMsg'), created.emailed
+        ? 'Cuenta creada. Se envió un correo a ' + email + ' con el acceso.'
+        : 'Creado → usuario: ' + username + '   correo: ' + email + '   contraseña: ' + password + '. No se pudo enviar el correo.',
+        !!created.emailed);
       $('newUser').value = ''; $('newEmail').value = ''; $('newPass').value = '';
       if (requestId) { clearRequest(); loadRequests(); }
       load();
